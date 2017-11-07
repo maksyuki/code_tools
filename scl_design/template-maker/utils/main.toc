@@ -1,0 +1,27 @@
+\contentsline {section}{\numberline {1}图论}{1}
+\contentsline {subsection}{\numberline {1.1}k短路(Dijkstra+邻接表+堆优化)}{1}
+\contentsline {subsection}{\numberline {1.2}二分图最大匹配(匈牙利+dfs增广)}{2}
+\contentsline {subsection}{\numberline {1.3}二分图最大匹配(网络流思想)}{2}
+\contentsline {subsection}{\numberline {1.4}交叉染色法(DFS)}{2}
+\contentsline {subsection}{\numberline {1.5}全源最短路径(Floyd+邻接矩阵)}{3}
+\contentsline {subsection}{\numberline {1.6}单源最短路径(Bellman-foed+邻接阵)}{3}
+\contentsline {subsection}{\numberline {1.7}单源最短路径(Bellman-ford+边表)}{3}
+\contentsline {subsection}{\numberline {1.8}单源最短路径(Dijkstra+邻接阵)}{3}
+\contentsline {subsection}{\numberline {1.9}单源最短路径(Dijkstra+邻接阵+堆优化) }{4}
+\contentsline {subsection}{\numberline {1.10}单源最短路径(SPFA+邻接表)}{4}
+\contentsline {subsection}{\numberline {1.11}最大流(Dinic)}{5}
+\contentsline {subsection}{\numberline {1.12}最大流(Edmonds-Karp)}{6}
+\contentsline {subsection}{\numberline {1.13}最大流(Edmonds-Karp)(自写待修改)}{6}
+\contentsline {subsection}{\numberline {1.14}最小生成树(Kruskal+边表)}{7}
+\contentsline {subsection}{\numberline {1.15}最小生成树(Prim+邻接矩阵)}{8}
+\contentsline {subsection}{\numberline {1.16}最小路径覆盖}{8}
+\contentsline {subsection}{\numberline {1.17}次短路(Dijkstra+邻接表+堆优化)}{9}
+\contentsline {subsection}{\numberline {1.18}求无向图割点+输出重连通分量}{9}
+\contentsline {subsection}{\numberline {1.19}求无向图割边}{10}
+\contentsline {subsection}{\numberline {1.20}求无向图割边+缩点(无重边)}{11}
+\contentsline {subsection}{\numberline {1.21}求无向图割边+缩点(有重边)}{12}
+\contentsline {subsection}{\numberline {1.22}求有向图强连通分量(Tarjan)}{13}
+\contentsline {subsection}{\numberline {1.23}求有向图强连通分量(以POJ1236为例)}{14}
+\contentsline {subsection}{\numberline {1.24}求有向图强连通分量(以POJ1904为例)}{15}
+\contentsline {subsection}{\numberline {1.25}求有向图强连通分量(以POJ2762为例)}{16}
+\contentsline {subsection}{\numberline {1.26}求混合图欧拉回路}{17}

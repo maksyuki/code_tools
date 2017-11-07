@@ -1,0 +1,2923 @@
+\section{图论}
+\subsection{k短路(Dijkstra+邻接表+堆优化)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+以 POJ 2449 为例
+
+求解过程 ：
+ 1. 将图反向，用 dijstra + heap 求出 t 到所有点的最短距离
+，目的是求所有点到点 t 的最短路，用 dis[i] 表示 i 到 t 的最
+短路，其实这就是 A* 的启发函数，显然 ：h(n) <= n 到 t 的实
+际代价
+ 2. 定义估价函数。我们定义 g(n) 为从 s 到 n 所花费的代价， h(
+n) 为 dis[n] ，显然这符合 A* 算法的要求
+ 3. 初始化状态。状态中存放当前到达的点 i , fi , gi 。显然，
+ fi = gi + dis[i] 。初始状态为 (0, S, dis[S],) ，存入优先
+级队列中。
+ 4. 状态转移。假设当前状态所在的点 u 相邻的点 v ，我们可以
+得到转换： (gu, u, fu) --> (gu + w[u][v], v, fu + w[u][v]) 。
+ 5. 终止条件。每个节点最多入队列 K 次，当 t 出队列 K 次时，即
+找到解。
+************************************************
+@ 接口: void Dij (int s)
+@ 功能: 求解从 s 开始的最短路
+@ 时间复杂度: O (nlogn)
+@s: 源点
+
+@ 接口: int A_star (int s, int k)
+@ 功能: 求解从 s 开始的第k小值
+@ 时间复杂度: O (nk)
+@s: 源点
+@k: 表示要求解第 k 小的值
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define DB(ccc) cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 1000 + 66;
+
+int n, m, dis[maxn], cnt[maxn];
+vector <PII> edge[maxn], g[maxn];
+
+struct Node
+{
+    int g, v, f;
+    Node () {}
+    Node (int gg, int vv, int ff) : g (gg), v (vv), f (ff) {}
+    bool operator < (const Node &a) const
+    {
+        return f > a.f;
+    }
+};
+
+void Dij (int s)
+{
+    fill (dis, dis + maxn, INF);
+    dis[s] = 0;
+    priority_queue <PII, vector <PII>, greater <PII> > qu;
+    qu.push (PII (0, s));
+    while (!qu.empty())
+    {
+        PII tt = qu.top (); qu.pop ();
+        int ta = tt.second, tb = tt.first;
+        if (dis[ta] < tb) continue;
+        for (int i = 0; i < edge[ta].size (); i++)
+        {
+            PII v = edge[ta][i];
+            if (v.first != s && dis[v.first] > v.second + dis[ta])
+            {
+                dis[v.first] = v.second + dis[ta];
+                qu.push (PII (dis[v.first], v.first));
+            }
+        }
+    }
+}
+
+int A_star (int s, int k)
+{
+    if (dis[s] == INF) return -1;
+    priority_queue <Node> qu;
+    qu.push (Node (0, s, dis[s]));
+    Node nxt = Node (0, 0, 0);
+    while (!qu.empty ())
+    {
+        Node tt = qu.top (); qu.pop ();
+        cnt[tt.v]++;
+        if (cnt[tt.v] > k) continue;
+        if (cnt[tt.v] == k) return tt.f;
+        for (int i = 0; i < g[tt.v].size (); i++)
+        {
+            PII vv = g[tt.v][i];
+            nxt.g = tt.g + vv.second;
+            nxt.v = vv.first;
+            nxt.f = nxt.g + dis[vv.first];
+            qu.push (nxt);
+        }
+    }    
+    return -1;
+    i--;
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+    while (scanf ("%d%d", &n, &m) != EOF)
+    {
+        for (int i = 0; i < maxn; i++)
+            edge[i].clear (), g[i].clear ();
+        memset (cnt, 0, sizeof (cnt));
+        for (int i = 1; i <= m; i++)
+        {
+            int u, v, w;
+            scanf ("%d%d%d", &u, &v, &w);
+            edge[v].push_back (PII (u, w));
+            g[u].push_back (PII (v, w));
+        }
+        int s, e, k;
+        scanf ("%d%d%d", &s, &e, &k);
+        if (s == e) k++;
+        Dij (e);
+        printf ("%d\n", A_star (s, k));
+    }
+    return 0;
+}
+\end{lstlisting}
+\subsection{二分图最大匹配(匈牙利+dfs增广)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+ ʹ�� dfs �������㣬�����ڳ���ͼ 
+************************************************
+@�ӿ�: void Init ()
+@����: ��ʼ���ڽӾ���
+@ʱ�临�Ӷ�: O (n ^ 2)
+
+@�ӿ�: int dfs (int u)
+@����: ����dfs����
+@ʱ�临�Ӷ�:
+@u: ��ʾһ���Ǳ��͵�
+
+@�ӿ�: long long MaxMatch ()
+@����: ���β��ҷǱ��͵����ƥ�䳢��
+@ʱ�临�Ӷ�: O (n ^ 3)
+************************************************/
+
+//�ֱ��ʾ�ڽӾ���Ͷ���ķ��ʱ�־
+int edge[maxn][maxn], vis[maxn];
+int cx[maxn], cy[maxn], cxlen, cylen;//cx[i]��ʾ����cx����iƥ���cy�����еĽڵ�ͼ����е�ĸ���
+
+void Init ()//��ʼ���ڽӾ���
+{
+    for (int i = 1; i < maxn; i++)
+        for (int j = 1; j < maxn; j++)
+            edge[i][j] = INF;
+}
+
+//����dfs����
+int dfs (int u)
+{
+    for (int v = 1; v <= cylen; v++)
+        if (edge[u][v] < INF && !vis[v])
+        {
+            vis[v] = 1;
+            if (cy[v] == -1 || dfs (cy[v]))
+            {
+                cy[v] = u;
+                cx[u] = v;
+                return 1;
+            }
+        } 
+    return 0;
+}
+
+//�����±��1��ʼ
+long long MaxMatch ()
+{
+    long long res = 0;
+    memset (cx, -1, sizeof (cx));//��ʼ������cx
+    memset (cy, -1, sizeof (cy));//��ʼ������cy
+    for (int i = 1; i <= cxlen; i++)
+        if (cx[i] == -1)
+        {
+            memset (vis, 0, sizeof (vis));
+            res += dfs (i);
+        }
+    return res;
+}
+\end{lstlisting}
+\subsection{二分图最大匹配(网络流思想)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+ʹ��dfs�������㣬�����ڳ���ͼ
+ע�⣺����㷨��˼��ǳ��������������㷨����Ҫ��
+���ܽ�˼��
+************************************************
+@�ӿ�: int dfs (int u)
+@����: ����dfs����
+@ʱ�临�Ӷ�:
+@u: ��ʾһ���Ǳ��͵�
+
+@�ӿ�: int MaxMatch ()
+@����: ���β��ҷǱ��͵����ƥ�䳢��
+@ʱ�临�Ӷ�: O (n ^ 3)
+************************************************/
+
+//�ֱ��ʾ�����ƥ������Ͷ���ķ��ʱ�־
+int match[maxn], vis[maxn];
+vector <int> g[maxn];//ʹ���ڽӱ���ͼ
+
+int dfs (int u)
+{
+	vis[u] = true;
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i], t = match[v];
+		if (t < 0 || (!vis[t] && dfs (t)))
+		{
+			match[u] = v;
+			match[v] = u;
+			return 1; 
+		}
+	}
+	return 0;
+}
+
+int maxmatch ()
+{
+	int res = 0;
+	memset (match, -1, sizeof (match));
+	for (int i = 0; i < n; i++)
+		if (match[i] == -1)
+		{
+			memset (vis, 0, sizeof (vis));
+			res += dfs (i);
+		}
+	return res;
+}
+\end{lstlisting}
+\subsection{交叉染色法(DFS)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+判定二分图：
+交叉染色法(DFS)是一种判定二分图的常用方法。初始化
+所有顶点为无色(颜色0)状态，用DFS遍历一个图G的同时
+，顺便对顶点染色(只染1、-1色)。注意遍历过的顶点还
+可以再遍历重新上色。遍历到某个时候在对顶点t染色时
+，发现边(s,t)的另一个结点s已染色，且s的颜色与当前
+正要对t染的颜色相同，那么图G必定不是二分图。
+可以想象二分图就像是河的两岸有两排顶点，每染色一
+次则过河一次，那么相同颜色的顶点必定在同一侧。一
+旦出现异侧有相同颜色的顶点，就可以说明图G不是二分
+图了
+
+判定奇圈：
+(1)如果一个双连通分量内(连通图)的某些顶点在一个奇
+圈中(即双连通分量(连通图)含有奇圈)，那么这个双连
+通分量(连通图)的其他顶点也在某个奇圈中
+
+(2)如果一个双连通分量(连通图)含有奇圈，则它必定不
+是一个二分图。反过来也成立，这是一个充要条件。所
+以若判定当前双连通分量(连通图)不是二分图(含有同颜
+色的异侧顶点)，则这个图中存在奇圈
+************************************************
+@接口: bool CrossColor (int u, int col)
+@功能: 判定二分图或者是判定奇圈
+@时间复杂度: O (n)
+@u: 当前节点
+@col: 当前节点将要被染色的值(1或者是-1)
+************************************************/
+
+//color[i]表示顶点i被染的颜色，初始化为0，使用1和-1两个值来交叉染色，part[i]表示当前节点是否在同一个双连通分量中，初始化为0
+int color[maxn], part[maxn];
+
+bool CrossColor (int u, int col)
+{
+	color[u] = col;
+	for (int v = 1; v <= n; v++)
+		if (g[u][v] && part[v])
+		{
+			if (color[v] == 0 && CrossColor (v, -col)) return 1;
+			if (color[v] == col) return 1;
+		}
+	return 0;
+}
+\end{lstlisting}
+\subsection{全源最短路径(Floyd+邻接矩阵)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+��ȫԴ���·��������ʹ���ڽӾ���������ڽӱ�����
+ʼ����̾�������
+************************************************
+@�ӿ�: void floyd ()
+@����: ��ȫԴ���·��
+@ʱ�临�Ӷ�: O (n^3)
+************************************************/
+
+//�ֱ��ʾ�ڽӾ������̾�������
+int edge[maxn][maxn], dis[maxn][maxn];
+//�ֱ��ʾ��������ͱ���
+int n, m;
+
+//��ʼ���ڽӾ���
+void Init ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+            if (i == j)
+                edge[i][j] = 0;
+
+            else
+                edge[i][j] = INF;
+        }
+}
+
+//�����±��1��ʼ
+void floyd ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            dis[i][j] = edge[i][j];
+
+    for (int k = 1; k <= n; k++)
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+            {
+                if (i == k || j == k)
+                    continue;
+
+                if (dis[i][k] < INF && dis[k][j] < INF)
+                    dis[i][j] = min (dis[i][j], dis[i][k] + dis[k][j]);
+            }
+}
+\end{lstlisting}
+\subsection{单源最短路径(Bellman-foed+邻接阵)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+************************************************
+@�ӿ�: void Init ()
+@����:  ��ʼ���ڽӾ���
+@ʱ�临�Ӷ�: O (n ^ 2)
+
+@�ӿ�: void Bellman_ford (int s)
+@����: ���ӿ�ʼ�ĵ�Դ���·
+@ʱ�临�Ӷ�:  O (n ^ 3)
+@s: Դ��
+************************************************/
+
+//�ֱ��ʾ�ڵ㵽Դ�����̾��롢�ڽӾ���Ͷ������
+int dis[maxn], edge[maxn][maxn], n;
+
+//��ʼ���ڽӾ���
+void Init ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+            if (i == j)
+                edge[i][j] = 0;
+
+            else
+                edge[i][j] = INF;
+        }
+}
+
+//�����±��1��ʼ
+void Bellman_ford (int s)
+{
+    for (int i = 1; i <= n; i++)
+        dis[i] = INF;
+
+    dis[s] = 0;
+    for (int i = 1; i < n; i++)//����n-1��
+    {
+        for (int j = 1; j <= n; j++)
+        {
+            if (j != s)
+            {
+                for (int k = 1; k <= n; k++)
+                {
+                    if (dis[k] < INF && edge[k][j] < INF && dis[k] + edge[k][j] < dis[j])
+                        dis[j] = dis[k] + edge[k][j];
+                }
+            }
+        }
+    }
+    //�жϸ�Ȧ�Ļ���Ҫ�ٽ���һ�ε��������Ƿ����һ����v��dis[v]���ٴα��ɳ�
+    //������ڣ���˵��ͼ�д��ڸ�Ȧ
+}
+\end{lstlisting}
+\subsection{单源最短路径(Bellman-ford+边表)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+����Դ�㵽�����ڵ�����·��ע��������㷨����
+������ͼ������ͼ��ֻ�Ƕ�������ͼ��˵�ڹ���߱�ʱ
+ͬһ����Ҫ��������
+************************************************
+@�ӿ�: void bellman_ford (int s)
+@ʱ�临�Ӷ�: O (n * m)
+@s: Դ��
+************************************************/
+
+int dis[maxn], path[maxn];
+
+void Bellman_ford (int s)
+{
+    for (int i = 0; i < n; i++)
+    {
+        dis[i] = INF;
+        path[i] = -1;
+    }
+
+    dis[s] = 0;
+    for (int i = 1; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            if (dis[edge[j].u] < INF && dis[edge[j].v] > dis[edge[j].u] + edge[j].w)
+            {
+                dis[edge[j].v] = dis[edge[j].u] + edge[j].w;
+                path[edge[j].v] = edge[j].u;
+            }
+        }
+    }
+}
+\end{lstlisting}
+\subsection{单源最短路径(Dijkstra+邻接阵)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+************************************************
+@�ӿ�: void Init ()
+@����: ��ʼ���ڽӾ���
+@ʱ�临�Ӷ�: O (n ^ 2)
+@:
+
+@�ӿ�: void Dijkstra (int s)
+@����: ����s��ʼ�����·
+@ʱ�临�Ӷ�: O(n��^ 2)
+@s: Դ��
+************************************************/
+
+const int maxn = 1000 + 66;
+
+bool vis[maxn];//��ʾ�ڵ�����·�Ƿ��Ѿ��õ�
+//�ֱ��ʾ�ڽӾ��󡢽ڵ����·�ĳ��ȺͶ���ĸ���
+int edge[maxn][maxn], dis[maxn], n;
+
+void Init ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+            if (i == j) edge[i][j] = 0;
+            else edge[i][j] = INF;
+        }
+}
+
+void Dijkstra (int s)
+{
+    memset (vis, false, sizeof (vis));;
+    vis[s] = true;
+    for (int i = 1; i <= n; i++)//��ʼ��Դ�����ڽӵĽڵ����̾���
+        dis[i] = edge[s][i];
+
+    dis[s] = 0;//Դ�㵽�Լ������·��0��ʮ����Ҫ!!!
+    for (int i = 2; i <= n; i++)
+    {
+        int minval = INF, minpos = s;
+        for (int j = 1; j <= n; j++)//��������δȷ�����·�Ľڵ��о�����С����ĵĽڵ��ҵ�
+            if (j != s && !vis[j] && minval > dis[j])
+            {
+                minval = dis[j];
+                minpos = j;
+            }
+
+        vis[minpos] = true;//���ʸýڵ�
+        for (int j = 1; j <= n; j++)//��������minpos�ڵ�ȷ�����·֮���µ���С����仯
+            if (j != s && !vis[j] && edge[minpos][j] < INF && edge[minpos][j] + dis[minpos] < dis[j])
+                dis[j] = edge[minpos][j] + dis[minpos];
+    }
+}
+\end{lstlisting}
+\subsection{单源最短路径(Dijkstra+邻接阵+堆优化) }
+\begin{lstlisting}[language=C++]
+/***********************************************
+************************************************
+@�ӿ�: void Init ()
+@����: ��ʼ���ڽӾ���
+@ʱ�临�Ӷ�: O (n ^ 2)
+@:
+
+@�ӿ�: void Dijkstra (int s)
+@����: ����s��ʼ�����·
+@ʱ�临�Ӷ�: O(nlogn)
+@s: Դ��
+************************************************/
+typedef pair <int, int> PII;
+
+const int maxn = 1000 + 66;
+//�ֱ��ʾ�ڽӾ��󡢽ڵ����·�ĳ��ȺͶ���ĸ���
+int edge[maxn][maxn], dis[maxn], n;
+
+void Init ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+            if (i == j) edge[i][j] = 0;
+            else edge[i][j] = INF;
+        }
+}
+
+void Dijkstra (int s)
+{
+    fill (dis, dis + maxn, INF);
+    dis[s] = 0;//Դ�㵽�Լ������·��0��ʮ����Ҫ!!!
+    priority_queue <PII, vector <PII>, greater <PII> > qu;
+    qu.push (PII (0, s));
+    while (!qu.empty ())
+    {
+        PII tt = qu.top (); qu.pop ();
+        int ta = tt.second, tb = tt.first;
+        if (dis[ta] < tb) continue;
+        for (int i = 1; i <= n; i++)
+            if (i != s && edge[ta][i] < INF && dis[i] > edge[ta][i] + dis[ta])
+            {
+                dis[i] = edge[ta][i] + dis[ta];
+                qu.push (PII (dis[i], i));
+            }
+    }
+}
+\end{lstlisting}
+\subsection{单源最短路径(SPFA+邻接表)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+SPFA�㷨�Ƽ�ʹ���ڽӱ���Ϊ��ͼ�����ݽṹ
+************************************************
+@�ӿ�: void spfa (int s)
+@����: ����Դ��s��ʼ�����·
+@ʱ�临�Ӷ�: O(k * m)
+@s: Դ��
+************************************************/
+
+//�ֱ��ʾ����v��w����һ���ڽӵ�λ��
+struct Node
+{
+    int v, w, next;
+};
+
+Node edge[maxn*maxn];
+int head[maxn], edgelen;//�ֱ��ʾ����ı�ͷ�ڵ�ͱߵ�����
+
+//�����е��������ʼ��Ϊ-1
+void Init ()
+{
+    memset (head, -1, sizeof (head));
+    memset (edge, -1, sizeof (edge));
+    edgelen = 0;
+}
+
+//ʹ��ͷ�巨����
+void AddEdge (int u, int v, int w)
+{
+    edge[edgelen].v = v;
+    edge[edgelen].w = w;
+    edge[edgelen].next = head[u];
+    head[u] = edgelen++;
+}
+
+//�ֱ��ʾԴ�㵽�����������̾��롢�����Ƿ��ڶ����е��ж����顢��������еĴ����Ͷ������
+int dis[maxn], inq[maxn], cnt[maxn];
+int n;
+
+//��ʾ�Ƿ���ڸ�Ȩֵ��·��true��ʾ�����ڣ�false��ʾ����
+bool is_valid;
+
+//�����±��1��ʼ
+void spfa (int s)
+{
+    for (int i = 1; i <= n; i++)//��ʼ��dis�����inq����
+    {
+        dis[i] = INF;
+        inq[i] = cnt[i] = 0;
+    }
+
+    dis[s] = 0;//��Դ���dis����ֵ��ʼ��Ϊ0����Ҫ����
+    is_valid = true;//��ʼ�����
+    queue <int> qu;
+    qu.push (s);
+    inq[s]++;//��Դ���־Ϊ�ڶ�����
+    cnt[s]++;
+    while (!qu.empty ())
+    {
+        int tt = qu.front(); qu.pop (); inq[tt]--;
+
+        if (cnt[tt] > n)
+        {
+            is_valid = false;
+            return ;
+        }
+
+        int pa = head[tt];
+        while (pa != -1)
+        {
+            int pb = edge[pa].v;
+            if (dis[tt] < INF && dis[pb] > dis[tt] + edge[pa].w)//�ɳڲ���
+            {
+                dis[pb] = dis[tt] + edge[pa].w;
+                if (!inq[pb])//������ɳڵĽڵ㲻�ڶ����У��򽫸ý����
+                {
+                    qu.push (pb);
+                    inq[pb]++;
+                    cnt[pb]++;
+                }
+            }
+            pa = edge[pa].next;
+        }
+    }
+}
+\end{lstlisting}
+\subsection{最大流(Dinic)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+Dinic算法
+************************************************
+@接口: void Init ()
+@功能: 初始化邻接表
+@时间复杂度: O (1)
+
+@接口: void Bfs (int s, int e)
+@功能: 构造层次网络
+@时间复杂度: O (m)
+@s: 源点的下标
+@e: 汇点的下标
+
+@接口: int MaxFlow (int s, int e, int n)
+@功能: 返回网络最大流
+@时间复杂度: (n ^ 2 * m)
+@s: 源点的下标
+@e: 汇点的下标
+@n: 顶点个数
+************************************************/
+
+//分别表示邻接节点的下标、邻接表中下一个位置、当前边的容量和流量
+struct Node
+{
+	int to, nxt, c, f;	
+};
+
+Node edge[maxn];
+int head[maxn], edgelen;
+int dep[maxn], cnt[maxn], cur[maxn];//分别表示顶点的层次值、层次值出现的次数和临时head表
+
+void Init ()
+{
+	memset (head, -1, sizeof (head));
+	memset (edge, -1, sizeof (edge));
+	edgelen = 0;
+}
+
+//edge从0开始，所以顶点对为(0,1)、(2,3)...，即任意顶点值对1取异或得到的还是顶点对中的数，保证逆向路径转换为正向路径
+void AddEdge (int u, int v, int w, int rw = 0)
+{
+	edge[edgelen].to = v, edge[edgelen].c = w, edge[edgelen].f = 0;
+	edge[edgelen].nxt = head[u], head[u] = edgelen++;
+	edge[edgelen].to = u, edge[edgelen].c = rw, edge[edgelen].f = 0;
+	edge[edgelen].nxt = head[v], head[v] = edgelen++;
+}
+
+//从汇点e开始反向构建层次表(即e的dep值为0)
+void Bfs (int s, int e)
+{
+	memset (dep, -1, sizeof (dep));
+	memset (cnt, 0, sizeof (cnt));
+	dep[e] = 0;
+	cnt[dep[e]]++;
+	queue <int> qu;
+	qu.push (e);
+	while (!qu.empty ())
+	{
+		int u = qu.front (); qu.pop ();
+		for (int i = head[u]; i != -1; i = edge[i].nxt)
+		{
+			int v = edge[i].to;
+			if (dep[v] != -1) continue;
+			qu.push (v);
+			dep[v] = dep[u] + 1;
+			cnt[dep[v]]++;
+		}
+	}
+}
+
+int sta[maxn];//栈
+
+int MaxFlow (int s, int e, int n)
+{
+	Bfs (s, e);	
+	int res = 0, top = 0, u = s;
+	memcpy (cur, head, sizeof (head));
+	while (dep[s] < n)
+	{
+		if (u == e)//若当前顶点为汇点则表示找到增广路，此时寻找路径上最小剩余流量并修改路径上的所有点的流量值
+		{
+			int minval = INF, minval_pos = -1;
+			for (int i = 0; i < top; i++)
+				if (minval > edge[sta[i]].c - edge[sta[i]].f)
+				{
+					minval = edge[sta[i]].c - edge[sta[i]].f;
+					minval_pos = i;
+				}
+			for (int i = 0; i < top; i++)
+			{
+				edge[sta[i]].f += minval;
+				edge[sta[i]^1].f -= minval;
+			}
+			res += minval;
+			top = minval_pos;
+			u = edge[sta[top]^1].to;
+		}
+		else
+		{
+			bool is_have = false;//判断是否能够向更低层次的点移动，若可以则移动
+			for (int i = cur[u]; i != -1; i = edge[i].nxt)
+			{
+				int v = edge[i].to;
+				if (edge[i].c - edge[i].f && dep[v] + 1 == dep[u])
+				{
+					cur[u] = i;
+					sta[top++] = cur[u];
+					u = v;
+					is_have = true;
+					break;
+				}
+			}
+			if (is_have) continue;
+
+			int minval = n;//若不可移动，则回退离源点最远满足条件的点继续判断
+			for (int i = head[u]; i != -1; i = edge[i].nxt)
+				if (edge[i].c - edge[i].f && dep[edge[i].to] < minval)
+				{
+					minval = dep[edge[i].to];
+					cur[u] = i;
+				}
+			cnt[dep[u]]--;
+			if (!cnt[dep[u]]) return res;//回退之后发现所有层次值为dep[u]的顶点都没有了，则一定不会有增广路了
+			dep[u] = minval + 1;
+			cnt[dep[u]]++;//若层次值为dep[u]的顶点还有，则将当前顶点u的dep值和数量cnt还原
+			if (u != s) u = edge[sta[--top]^1].to;
+		}
+	}
+	return res;
+}
+\end{lstlisting}
+\subsection{最大流(Edmonds-Karp)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+��POJ 2173Ϊ��
+************************************************
+@�ӿ�: long long Edmonds_Karp (int s, int t)
+@����: ���������
+@ʱ�临�Ӷ�: O (n * m ^ 2)
+@s: Դ����±�
+@t: �����±�
+************************************************/
+
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+const int INF = 0x7FFFFFFF;
+const int MOD = 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 200 + 66;
+
+
+struct Node
+{
+	int c, f;//�ֱ��ʾ��֮�������������
+};
+
+Node edge[maxn][maxn];
+//n��ʾ����ĸ�����m��ʾ�ߵĸ�����pre��ʾ��ǰ�ڵ��ǰ׺�ڵ㣬a��ʾ��ǰ�ڵ�Ŀ�������������a[i] = 0��ʾ
+//��ǰ�ڵ㲻������������ǻ�û�б�����
+int n, m, pre[maxn], a[maxn];
+
+//�ڵ��ú���ǰҪ��������ʼ��������!!!
+long long Edmonds_Karp (int s, int t)
+{
+    queue <int> q;
+    memset (a, 0, sizeof(a));
+    memset (pre, 0, sizeof(pre));
+    long long maxflow = 0;
+
+    while (1)
+    {
+        memset (a, 0, sizeof(a));
+        a[s] = INF;//��ֵINF��ʾԴ��������������ڽӽڵ����������
+        q.push(s);
+        while (!q.empty())
+        {
+            int tt = q.front(); q.pop();
+
+            for (int i = 1; i <= n; i++)
+            if(!a[i] && edge[tt][i].c > edge[tt][i].f)
+            {
+                pre[i] = tt;
+                q.push (i);
+                a[i] = a[tt] < edge[tt][i].c - edge[tt][i].f ? a[tt]:edge[tt][i].c - edge[tt][i].f;
+            }
+        }
+
+        if(a[t] == 0) break;
+
+        for(int i = t; i != s; i = pre[i])
+        {
+            edge[pre[i]][i].f += a[t];
+            edge[i][pre[i]].f -= a[t];
+        }
+
+        maxflow += a[t];
+    }
+    return maxflow;
+}
+
+
+int main()
+{
+//    ifstream cin ("aaa.txt");
+
+    while (cin >> m >> n)
+	{
+		memset (edge, 0, sizeof (edge));
+
+        int u, v, w;
+        for (int i = 1; i <= m; i++)
+        {
+            cin >> u >> v >> w;
+            edge[u][v].c += w;
+        }
+
+        cout << Edmonds_Karp (1, n) << endl;
+	}
+
+return 0;
+}
+\end{lstlisting}
+\subsection{最大流(Edmonds-Karp)(自写待修改)}
+\begin{lstlisting}[language=C++]
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+const int INF = 0x7FFFFFFF;
+const int MOD = 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 100 + 66;
+
+
+struct Node
+{
+	int c, f;//�ֱ��ʾ��֮�������������
+};
+
+Node edge[maxn][maxn];
+int n, m;
+int vis[maxn], pre[maxn], res[maxn][maxn];
+
+void FindAugmentPath (int s, int t)
+{
+	memset (vis, 0, sizeof (vis));
+	memset (res, -1, sizeof (res));
+	memset (pre, -1, sizeof (pre));
+	pre[s] = INF, vis[s] = 1;
+	queue <int> qu;
+	qu.push(s);
+
+	while(!qu.empty() && pre[t] == -1)
+	{
+        int tt = qu.front(); qu.pop ();
+        for (int i = 0; i <= n + 1; i++)
+		{
+            if (!vis[i])
+			{
+                if (edge[tt][i].f < edge[tt][i].c)
+				{
+					res[tt][i] = edge[tt][i].c - edge[tt][i].f;
+					vis[i] = 1, pre[i] = tt, qu.push(i);
+				}
+
+				else if (edge[i][tt].f > 0)
+				{
+					res[tt][i] = edge[i][tt].f;
+					vis[i] = 1, pre[i] = tt, qu.push(i);
+				}
+			}
+		}
+	}
+}
+
+long long GetAugmentFlow (int s, int t)
+{
+    if (pre[t] == -1)
+		return 0;
+
+	int pa = t, pb = INF;
+	while (pa != s)
+	{
+        if (res[pre[pa]][pa] < pb)
+			pb = res[pre[pa]][pa];
+
+		pa = pre[pa];
+	}
+
+	return pb;
+}
+
+void UpDateFlow (int s, int t, int v)
+{
+	if (pre[t] == -1)
+		return ;
+
+    int pa = t;
+    while (pa != s)
+	{
+        if (edge[pre[pa]][pa].c > edge[pre[pa]][pa].f)
+			edge[pre[pa]][pa].f += v;
+
+		else if (edge[pa][pre[pa]] .f > 0)
+			edge[pre[pa]][pa].f += v;
+
+		pa = pre[pa];
+	}
+}
+
+long long Ford_Fulkerson (int s, int t)
+{
+    long long maxflow = 0, tt;
+    while (1)
+	{
+        FindAugmentPath (s, t);
+        tt = GetAugmentFlow (s, t);
+        maxflow += tt;
+        if (tt > 0)
+			UpDateFlow (s, t, tt);
+
+		else
+			return maxflow;
+	}
+}
+
+int pig[maxn], last[maxn];
+
+int main()
+{
+//	ifstream cin ("aaa.txt");
+
+    while (cin >> m >> n)
+	{
+		memset (edge, 0, sizeof (edge));
+        memset (last, 0, sizeof (last));
+
+        for (int i =1;  i <= m; i++)
+            cin >> pig[i];
+
+        for (int i = 1; i <= n; i++)
+        {
+            int tt;
+            cin >> tt;
+            for (int j = 1; j <= tt; j++)
+            {
+                int k;
+                cin >> k;
+                if (!last[k])
+                    edge[0][i].c += pig[k];
+
+                else
+                    edge[last[k]][i].c = INF;
+
+                last[k] = i;
+            }
+            cin >> edge[i][n+1].c;
+        }
+
+        cout << Ford_Fulkerson (0, n + 1) << endl;
+	}
+
+return 0;
+}
+\end{lstlisting}
+\subsection{最小生成树(Kruskal+边表)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+************************************************
+@�ӿ�: int UnFind (int val)
+@ʱ�临�Ӷ�: O (n)
+@val: �ڵ�����
+
+@�ӿ�: void kruskal
+@ʱ�临�Ӷ�: O (n)
+************************************************/
+
+const int maxn = 1e6+66;
+
+struct Node
+{
+    int u, v, w;
+};
+
+Node a[maxn];
+int parent[maxn], n, r;
+
+bool cmp (Node aa, Node bb)
+{
+	return aa.w < bb.w;
+}
+
+int UnFind (int val)
+{
+	if (parent[val] == val)
+		return val;
+
+	return parent[val] = UnFind (parent[val]);
+}
+
+long long kruskal ()
+{
+    long long remain = n, res = 0;
+    for (int i = 1; i <= r && remain > 1; i++)
+	{
+        if (UnFind (a[i].u) != UnFind(a[i].v))
+		{
+            parent[UnFind(a[i].u)] = UnFind (a[i].v);
+            remain--;
+            res += a[i].w;
+		}
+	}
+
+return res;
+}
+\end{lstlisting}
+\subsection{最小生成树(Prim+邻接矩阵)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+************************************************
+@�ӿ�: void Init ()
+@����: ��ʼ���ڽӾ���
+@ʱ�临�Ӷ�: O (n^2)
+@:
+
+@�ӿ�: long long Prim (int s)
+@����: �����С������
+@ʱ�临�Ӷ�: O (n^2)
+@s: Դ��
+************************************************/
+
+const int maxn = 100 + 66;
+
+bool vis[maxn];//��ʾ�ڵ��Ƿ�����С��������
+//�ֱ��ʾ�ڽӾ��󡢽ڵ������С�������ľ���Ͷ���ĸ���
+int edge[maxn][maxn], dis[maxn], n;
+
+void Init ()
+{
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+            if (i == j)
+                edge[i][j] = 0;
+
+            else
+                edge[i][j] = INF;
+        }
+}
+
+long long Prim (int s)
+{
+    memset (vis, false, sizeof (vis));
+    long long res = 0;
+    vis[s] = true;
+
+    for (int i = 1; i <= n; i++)//��ʼ��Դ�����ڽӵĽڵ����С����������
+        dis[i] = edge[s][i];
+
+    for (int i = 2; i <= n; i++)
+    {
+        int minval = INF, minpos = s;
+        for (int j = 1; j <= n; j++)//��������δ��MST�о�����С����ĵĽڵ��ҵ�
+            if (j != s && !vis[j] && minval > dis[j])
+            {
+                minval = dis[j];
+                minpos = j;
+            }
+
+        vis[minpos] = true;//���ʸýڵ�
+        res += minval;//�ۼӱ�Ȩ
+
+        for (int j = 1; j <= n; j++)//��������minpos�ڵ���뵽MST���µ���С����仯
+            if (j != s && !vis[j] && edge[minpos][j] < dis[j])
+                dis[j] = edge[minpos][j];
+    }
+
+    return res;
+}
+\end{lstlisting}
+\subsection{最小路径覆盖}
+\begin{lstlisting}[language=C++]
+/***********************************************
+最小路径覆盖定义：在有向图中找一些路径，使之覆盖
+了图中的所有顶点，就是任意一个顶点都跟那些路径中
+的某一条相关联，且任何一个顶点有且只有一条路径与
+之关联，一个单独的顶点是一条路径。最小路径覆盖就
+是最少的路径覆盖数
+
+求法：最小路径覆盖数=顶点数-最大匹配数，所以需要
+构造二分图来跑最大匹配
+
+
+最小路径覆盖与最小边覆盖的区别
+最小路径覆盖和最小边覆盖不同，不要求给的图是二分
+图，而是要求是的有向图，不能有环，然后根据原图构
+造二分图，构造方法是将点一分为二（拆点），v分为
+v*和v**然后如v*和u**有边，那么就在v*和u**之间连
+一条边。然后最小路径覆盖是n-m，n为原图的点的个数
+，m为新造二分图的最大匹配。证明也特别简单，根据
+定义最小路径覆盖里要求同一个点只可以属于一条路径
+，即路径是不可以开岔的，如果在二分图里选两条有公
+共点的边那么反应在原图上就是路径有岔路，那么就不
+符合匹配的定义了，所以二分图里选的边必须是无公共
+交点的，这就转化到最大匹配了。
+************************************************
+@接口: void Init ()
+@功能: 初始化邻接矩阵
+@时间复杂度: O (n ^ 2)
+
+@接口: int dfs (int u)
+@功能: 进行dfs增广
+@时间复杂度:
+@u: 表示一个非饱和点
+
+@接口: long long MaxMatch ()
+@功能: 依次查找非饱和点进行匹配尝试
+@时间复杂度: O (n ^ 3)
+************************************************/
+
+//分别表示邻接矩阵和顶点的访问标志
+int edge[maxn][maxn], vis[maxn];
+int cx[maxn], cy[maxn], cxlen, cylen;//cx[i]表示集合cx中与i匹配的cy集合中的节点和集合中点的个数
+
+void Init ()//初始化邻接矩阵
+{
+    for (int i = 1; i < maxn; i++)
+        for (int j = 1; j < maxn; j++)
+            edge[i][j] = INF;
+}
+
+//进行dfs增广
+int dfs (int u)
+{
+    for (int v = 1; v <= cylen; v++)
+        if (edge[u][v] < INF && !vis[v])
+        {
+            vis[v] = 1;
+            if (cy[v] == -1 || dfs (cy[v]))
+            {
+                cy[v] = u;
+                cx[u] = v;
+                return 1;
+            }
+        } 
+    return 0;
+}
+
+//数组下标从1开始
+long long MaxMatch ()
+{
+    long long res = 0;
+    memset (cx, -1, sizeof (cx));//初始化集合cx
+    memset (cy, -1, sizeof (cy));//初始化集合cy
+    for (int i = 1; i <= cxlen; i++)
+        if (cx[i] == -1)
+        {
+            memset (vis, 0, sizeof (vis));
+            res += dfs (i);
+        }
+    return res;
+}
+\end{lstlisting}
+\subsection{次短路(Dijkstra+邻接表+堆优化)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+��POJ3255Ϊ��
+************************************************
+@�ӿ�:  void Dijkstra (int s)
+@����: ����Դ��s��ʼ�Ĵζ�·
+@ʱ�临�Ӷ�: O (nlogn)
+@s: Դ��
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7FFFFFFF;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 5e3 + 66;
+
+vector <PII> edge[maxn];
+int n, dis[maxn][2];//n��ʾ�ڵ�ĸ�����dis[i][0]��ʾ��Դ�㵽i�����·��dis[i][1]��ʾ��Դ�㵽i�Ĵζ�·
+
+void Dijkstra (int s)
+{
+    for (int i = 0; i < maxn; i++)
+        for (int j = 0; j < 2; j++)
+            dis[i][j] = INF;
+
+    dis[s][0] = 0;//Դ�㵽�Լ������·��0��ʮ����Ҫ!!!
+    priority_queue <PII, vector <PII>, greater <PII> > qu;
+    qu.push (PII (0, s));
+    while (!qu.empty ())
+    {
+        PII ta = qu.top (); qu.pop ();
+        int v1 = ta.second, d1 = ta.first;
+        if (dis[v1][1] < d1) continue;
+        for (int i = 0; i < edge[v1].size (); i++)
+        {
+            PII tb = edge[v1][i];
+            int v2 = tb.first, w2 = tb.second;
+            int d2 = d1 + w2;
+            if (dis[v2][0] > d2)
+            {
+                swap (dis[v2][0], d2);
+                qu.push (PII (dis[v2][0], v2));
+            }
+
+            if (dis[v2][0] < d2 && dis[v2][1] > d2)
+            {
+                dis[v2][1] = d2;
+                qu.push (PII (dis[v2][1], v2));
+            }
+        }
+    }
+}
+
+
+int main()
+{
+//    CFF;
+    int m;
+    while (scanf ("%d %d", &n, &m) != EOF)
+    {
+        for (int i = 0; i < maxn; i++) edge[i].clear ();
+
+        for (int i = 1; i <= m; i++)
+        {
+            int u, v, w;
+            scanf ("%d %d %d", &u, &v, &w);
+            edge[u].PB (PII (v, w));
+            edge[v].PB (PII (u, w));
+        }
+
+        Dijkstra (1);
+        printf ("%d\n", dis[n][1]);
+    }
+    return 0;
+}
+\end{lstlisting}
+\subsection{求无向图割点+输出重连通分量}
+\begin{lstlisting}[language=C++]
+/***********************************************
+用求解无向图割点的Tarjan算法来输出重连通分量(点)
+
+求法：建立一个栈，在dfs向下搜索的过程中，每找到一
+个生成树的边或者是回边，则该边入栈。若遇到一个割点
+u，则将边从栈中退出并输出，直到退出边(u,v)，即退出
+的边及其邻接的点组成一个重连通分量(点)
+
+注意：
+为了防止访问过的边重复入栈，额外定义edge[i][j]==2
+表示顶点i和j之间有边且已经遍历过了
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 66;
+
+//edge[i][j] == INF表示顶点i和j之间没有边，且没有遍历过
+//edge[i][j] == 1表示顶点i和j之间有边
+//edge[i][j] == 2表示顶点i和j之间有边，且已经遍历过了
+int edge[maxn][maxn], vis[maxn], dfn[maxn], low[maxn];
+int n, m, id;
+stack <PII> sta;//注意清空
+
+void Init (int rt)
+{
+	for (int i = 0; i < maxn; i++)
+		for (int j = 0; j < maxn; j++)
+			edge[i][j] = INF;
+
+	while (!sta.empty ()) sta.pop ();
+	dfn[rt] = low[rt] = id = 1;
+	memset (vis, 0, sizeof (vis));
+	vis[rt] = 1;
+}
+
+void dfs (int u, int par)
+{
+	for (int v = 1; v <= n; v++)
+	{
+		if (edge[u][v] == 1)
+		{
+			sta.push (PII (u, v));
+			edge[u][v] = edge[v][u] = 2;
+			if (!vis[v])
+			{
+				vis[v] = 1;
+				dfn[v] = low[v] = ++id;
+				dfs (v, u);
+				low[u] = min (low[u], low[v]);
+				if (low[v] >= dfn[u])
+				{
+					while (!sta.empty ())
+					{
+						PII temp = sta.top ();
+						printf (" %d-%d", temp.first, temp.second);
+						sta.pop ();
+						if ((temp.first == u && temp.second == v) || (temp.first == v && temp.second == u)) 
+							break;
+					}
+					puts ("");
+				}
+			}
+
+			else if (v != par)
+				low[u] = min (low[u], dfn[v]);
+		}	
+	}
+}
+
+int main()
+{
+    CFF;
+    //CPPFF;
+  	while (scanf ("%d%d", &n, &m) != EOF)
+	{
+		Init (1);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v;
+			scanf ("%d%d", &u, &v);
+			edge[u][v] = edge[v][u] = 1;
+		}
+
+		dfs (1, -1);
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求无向图割边}
+\begin{lstlisting}[language=C++]
+/***********************************************
+以ZOJ 2588为例 Tarjan算法(有重边)
+Tarjan算法本质上是构建一个dfs优先生成树，然后在
+树上通过引入回边的概念来求解
+************************************************
+@接口: void Init (int rt)
+@功能:初始化邻接表和其他变量
+@时间复杂度: O (n ^ 2)
+@rt: 表示dfs生成树中的根(可任意指定)
+
+@接口: void dfs (int u, int par)
+@功能: dfs求解所有节点的dfn和low值
+@时间复杂度: O (n ^ 2)
+@u: 当前节点
+@par: 当前节点的父节点
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 10000 + 66;
+
+int vis[maxn], dfn[maxn], low[maxn], out[maxn*10];
+int n, m, id, len;
+map <PII, int> overedge;
+vector <PII> edge[maxn*10];
+
+void Init (int rt)
+{
+	overedge.clear ();
+	for (int i = 0; i < maxn * 10; i++)
+		edge[i].clear ();
+	dfn[rt] = low[rt] = id = 1;
+	memset (vis, 0, sizeof (vis));
+	vis[rt] = 1;
+	len = 0;
+}
+
+void dfs (int u, int par)
+{
+	for (int i = 0; i < edge[u].size (); i++)
+	{
+		int v = edge[u][i].first;
+		if (!vis[v])
+		{
+			vis[v] = 1;
+			dfn[v] = low[v] = ++id;
+			dfs (v, u);
+			low[u] = min (low[u], low[v]);
+			if (low[v] > dfn[u] && overedge[PII(u,v)] == 1)//有重边时需要特判，此时(u,v)之间没有割边
+				out[++len] = edge[u][i].second;
+		}
+
+		else if (v != par)
+			low[u] = min (low[u], dfn[v]);
+	}
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	int t, flag = 1;
+	scanf ("%d", &t);
+	while (t--)
+	{
+		if (flag++ > 1) puts ("");
+		scanf ("%d%d", &n, &m);
+
+		Init (1);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v;
+			scanf ("%d%d", &u, &v);
+			edge[u].push_back (PII (v, i));
+			edge[v].push_back (PII (u, i));
+			if (overedge.find (PII (u, v)) == overedge.end ())
+				overedge[PII(u,v)] = overedge[PII(v,u)] = 1;
+
+			else
+				overedge[PII(u,v)]++, overedge[PII(v,u)]++;
+		}
+
+		dfs (1, -1);
+
+		printf ("%d\n", len);
+		sort (out + 1, out + 1 + len);
+		for (int i = 1; i <= len; i++)
+		{
+			if (i == 1) printf ("%d", out[i]);
+			else printf (" %d", out[i]);
+		}
+		if (len) puts ("");
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求无向图割边+缩点(无重边)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+以POJ 3352为例 Tarjan算法(无重边)
+Tarjan算法本质上是构建一个dfs优先生成树，然后在
+树上通过引入回边的概念来求解
+
+注意：
+若图中没有重边，则low值相同的顶点一定在一个边重
+连通分量中(因为有环)。所以此时可以不使用栈来找点
+，而是双重循环枚举找邻接顶点，若两个顶点的low不同
+，则它们各自所在的“缩点”的度数自加1
+************************************************
+@接口: void Init (int rt)
+@功能:初始化邻接表和其他变量
+@时间复杂度: O (n ^ 2)
+@rt: 表示dfs生成树中的根(可任意指定)
+
+@接口: void dfs (int u, int par)
+@功能: dfs求解所有节点的dfn和low值
+@时间复杂度: O (n ^ 2)
+@u: 当前节点
+@par: 当前节点的父节点
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 5000 + 6;
+
+int dfn[maxn], low[maxn], vis[maxn];
+int n, m, id;
+stack <PII> sta;
+vector <int> g[maxn];
+set <PII> seta;
+int parent[maxn], deg[maxn], part[maxn];
+
+int UnFind (int val)
+{
+	if (parent[val] == val) return val;
+	else return parent[val] = UnFind (parent[val]);
+}
+
+void Init (int rt)
+{
+	for (int i = 0; i < maxn; i++)
+		parent[i] = i;
+	
+	for (int i = 0; i < maxn; i++)
+		g[i].clear ();
+	seta.clear ();
+	dfn[rt] = low[rt] = id = 1;
+	memset (vis, 0, sizeof (vis));
+	memset (deg, 0, sizeof (deg));
+	vis[rt] = 1;
+	while (!sta.empty ()) sta.pop ();
+}
+
+void SS ()
+{
+	for (int u = 1; u <= n; u++)
+		if (part[u])
+		{
+			for (int i = 0; i < g[u].size (); i++)
+			{
+				int v = g[u][i];
+				if (part[v])
+					parent[UnFind(v)] = UnFind (u);
+			}
+		}
+}
+
+void dfs (int u, int par)
+{
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (seta.find (PII (u, v)) == seta.end ())
+		{
+			seta.insert (PII (u, v));
+			seta.insert (PII (v, u));
+			sta.push (PII (u, v));
+			if (!vis[v])
+			{
+				vis[v] = 1;
+				dfn[v] = low[v] = ++id;
+				dfs (v, u);
+				low[u] = min (low[u], low[v]);
+				if (low[v] > dfn[u])
+				{
+					memset (part, 0, sizeof (part));
+					//bool is_have = false;
+					while (!sta.empty ())
+					{
+						PII temp = sta.top (); sta.pop ();
+						if ((temp.first == u && temp.second == v) || (temp.first == v && temp.second == u))
+							break;
+						part[temp.first] = part[temp.second] = 1;
+						//printf (" %d-%d ", temp.first, temp.second);
+						//is_have = true;
+					}
+					//if (is_have)
+					//	puts ("");
+					SS ();
+				}
+			}
+			else if (v != par)
+				low[u] = min (low[u], dfn[v]);	
+		}
+	}
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	while (scanf ("%d%d", &n, &m) != EOF)
+	{
+		Init (1);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v;
+			scanf ("%d%d", &u, &v);
+			g[u].push_back (v);
+			g[v].push_back (u);
+		}
+		dfs (1, -1);
+
+		seta.clear ();
+		for (int u = 1; u <= n; u++)
+			for (int i = 0; i < g[u].size (); i++)
+			{
+				int v = g[u][i];
+				if (seta.find (PII (u, v)) != seta.end ()) continue;
+				seta.insert (PII (u, v)), seta.insert (PII (v, u));
+				if (UnFind (u) != UnFind (v))
+					deg[UnFind(u)]++, deg[UnFind(v)]++;
+			}
+
+		int res = 0;
+		for (int i = 1; i <= n; i++)
+		{
+			//cout << "i = " << i << " deg[i] = " << deg[i] << endl;
+			if (deg[i] == 1) 
+				res++;
+		}
+
+		printf ("%d\n", (res + 1) / 2);
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求无向图割边+缩点(有重边)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+以POJ 3177为例 Tarjan算法(有重边)
+Tarjan算法本质上是构建一个dfs优先生成树，然后在
+树上通过引入回边的概念来求解
+
+注意：
+这个算法同样适用于无重边的情况。这里没有使用并查
+集来缩点，而是使用在同一个边重连通分量中的点的low
+值相同这个性质来求解的
+************************************************
+@接口: void Init (int rt)
+@功能:初始化邻接表和其他变量
+@时间复杂度: O (n ^ 2)
+@rt: 表示dfs生成树中的根(可任意指定)
+
+@接口: void dfs (int u, int par)
+@功能: dfs求解所有节点的dfn和low值
+@时间复杂度: O (n ^ 2)
+@u: 当前节点
+@par: 当前节点的父节点
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 5000 + 6;
+
+int dfn[maxn], low[maxn], vis[maxn], deg[maxn];
+int n, m, id;
+vector <int> g[maxn];
+set <PII> seta;
+
+void Init (int rt)
+{	
+	for (int i = 0; i < maxn; i++)
+		g[i].clear ();
+	seta.clear ();
+	dfn[rt] = low[rt] = id = 1;
+	memset (vis, 0, sizeof (vis));
+	memset (deg, 0, sizeof (deg));
+	vis[rt] = 1;
+}
+
+void dfs (int u, int par)
+{
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (!vis[v])
+		{
+			vis[v] = 1;
+			dfn[v] = low[v] = ++id;
+			dfs (v, u);
+			low[u] = min (low[u], low[v]);
+		}
+		else if (v != par)
+			low[u] = min (low[u], dfn[v]);
+	}
+}
+
+void SS ()
+{
+	for (int u = 1; u <= n; u++)
+		for (int i = 0; i < g[u].size (); i++)
+		{
+			int v = g[u][i];
+			if (low[u] != low[v])
+				deg[low[u]]++;
+		}
+}
+
+int main()
+{
+    CFF;
+    //CPPFF;
+	while (scanf ("%d%d", &n, &m) != EOF)
+	{
+		Init (1);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v;
+			scanf ("%d%d", &u, &v);
+			if (seta.find (PII (u, v)) != seta.end ()) continue;
+			seta.insert (PII (u, v)), seta.insert (PII (v, u));
+			g[u].push_back (v);
+			g[v].push_back (u);
+		}
+
+		dfs (1, -1);
+		SS ();
+
+		int res = 0;
+		for (int i = 1; i <= n; i++)
+			if (deg[i] == 1) 
+				res++;
+
+		printf ("%d\n", (res + 1) / 2);
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求有向图强连通分量(Tarjan)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+求解有向图强连通分量的Tarjan算法
+复杂度为O (n + m)
+
+Tarjan算法本质上是构建一个dfs优先生成树，然后在
+树上通过引入回边的概念来求解
+
+求法：
+在进行dfs搜索时，把当前搜索树中未处理的顶点压入
+栈中，回溯时判定。当dfn[u] == low[u]时，则以u为
+根的子树上的所有节点是一个强连通分量。重点是如何
+判定一个边是dfs生成树的边、回边还是交叉边。方法
+是若顶点u的邻接点v还未访问，则<u,v>是生成树的边。
+否则v已经访问了，不是生成树的边了。接着若邻接点v
+还在栈中，即顶点u和v在一个强连通分量中，v是u的祖
+先，则<u,v>是回边。反之，邻接点v不在栈中，即顶点
+u和v不在一个强连通分量中，则<u,v>是交叉边
+************************************************
+@接口: void Init (int rt)
+@功能:初始化邻接表
+@时间复杂度: O (n)
+
+@接口: void dfs (int u)
+@功能: dfs求解所有节点的dfn和low值
+@时间复杂度: O (n + m)
+@u: 当前节点
+
+@接口: void SS ()
+@功能: 求解给定有向图的强连通分量(原图可以不连通)
+@时间复杂度: O (n + m)
+************************************************/
+
+//分别表示顶点的dfn值、low值和顶点所属的强连通分量标号
+int dfn[maxn], low[maxn], belong[maxn];
+bool instack[maxn];//表示顶点是否在栈中
+stack <int> sta;
+vector <int> g[maxn];//邻接表存图
+int n, m, id, tot;//分别表示顶点数、边数、dfs优先生成树的全局标记和强连通分量的个数
+
+void Init ()
+{
+	for (int i = 0; i < maxn; i++)
+		g[i].clear ();
+}
+
+void dfs (int u)
+{
+	dfn[u] = low[u] = ++id;
+	sta.push (u);
+	instack[u] = true;
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (!dfn[v])
+		{
+			dfs (v);
+			low[u] = min (low[u], low[v]);
+		}
+		else if (instack[v])
+			low[u] = min (low[u], dfn[v]);
+	}
+	if (low[u] == dfn[u])
+	{
+		tot++;
+		int tt;
+		do
+		{
+			tt = sta.top (); sta.pop ();
+			instack[tt] = false;
+			belong[tt] = tot;
+		} while (!sta.empty () && tt != u);
+	}
+}
+
+void SS ()
+{
+	memset (dfn, 0, sizeof (dfn));
+	memset (low, 0, sizeof (low));
+	memset (instack, false, sizeof (instack));
+	while (!sta.empty ()) sta.pop ();
+	tot = id = 0;	
+	for (int i = 1; i <= n; i++)
+		if (!dfn[i])
+			dfs (i);
+}
+\end{lstlisting}
+\subsection{求有向图强连通分量(以POJ1236为例)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+POJ1236
+问题1：求解在一个有向图中至少选择几个顶点，才能做
+到从这些点出发，可以到达全部顶点
+问题2：求解在一个有向图中至少添加几条边，才能使得
+从任何一个顶点出发，可以到达全部顶点
+
+易知问题1的求解只需要找缩点后出度为0的点即可
+对于问题2，只要找出度为0的点的个数和入度为0的个数
+的较大值即可。首先是若图中存在出度为0的点和入度为
+0的点话，这个图一定不是强连通图。即需要消去这些点
+，所以优先这些点之间连边。每一次从出度为0的点向入
+度为0的点连一条边，就会构建出一个强连通分量，直到
+所有出度为0的点后入度为0的点都被消去为止。注意当
+原图中只有一个强连通分量时，结果需要特判为0！！！
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 166 + 66;
+
+int dfn[maxn], low[maxn], belong[maxn], indeg[maxn], outdeg[maxn];
+int n, id, tot;
+bool instack[maxn];
+vector <int> g[maxn];
+stack <int> sta;
+
+void dfs (int u)
+{
+	dfn[u] = low[u] = ++id;
+	sta.push (u);
+	instack[u] = true;
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (!dfn[v])
+		{
+			dfs (v);
+			low[u] = min (low[u], low[v]);
+		}
+		else if (instack[v])
+			low[u] = min (low[u], dfn[v]);
+	}
+	if (low[u] == dfn[u])
+	{
+		tot++;
+		int tt;
+		do
+		{
+			tt = sta.top (); sta.pop ();
+			instack[tt] = false;
+			belong[tt] = tot;
+		} while (!sta.empty () && tt != u);
+	}
+}
+
+void SS ()
+{
+	memset (dfn, 0, sizeof (dfn));
+	memset (low, 0, sizeof (low));
+	memset (instack, false, sizeof (instack));
+	id = tot = 0;
+	while (!sta.empty ()) sta.pop ();
+	for (int i = 1; i <= n; i++)
+		if (!dfn[i])
+			dfs (i);
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	while (scanf ("%d", &n) != EOF)
+	{
+		for (int i = 0; i < maxn; i++)
+			g[i].clear ();
+		for (int i = 1; i <= n; i++)
+		{
+			int u;
+			while (scanf ("%d", &u) != EOF)
+			{
+				if (u == 0) break;
+				g[i].push_back (u);
+			}
+		}
+		SS ();
+		set <PII> seta;
+		memset (indeg, 0, sizeof (indeg));
+		memset (outdeg, 0, sizeof (outdeg));
+		for (int u = 1; u <= n; u++)
+			for (int i = 0; i < g[u].size (); i++)
+			{
+				int v = g[u][i];
+				if (belong[u] != belong[v] && seta.find (PII (belong[u], belong[v])) == seta.end ())
+				{
+					indeg[belong[v]]++;
+					outdeg[belong[u]]++;
+					seta.insert (PII (belong[u], belong[v]));
+				}
+			}
+
+		int resa = 0, resb = 0;
+		for (int i = 1; i <= tot; i++)
+		{
+			if (!indeg[i]) resa++;
+			if (!outdeg[i]) resb++;
+		}
+		
+		printf ("%d\n", resa);
+		if (tot == 1) puts ("0");
+		else printf ("%d\n", max (resa, resb));
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求有向图强连通分量(以POJ1904为例)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+POJ1904
+问题：一个国王有n个王子和n个女孩。每个王子都有自己
+喜欢的若干个女孩，现给定一个合法的完备匹配（也就是
+一个王子娶其中一个自己喜欢女孩），求每个王子可以选
+择哪些女孩可以让剩下的每个王子依旧能够选择到自己喜
+欢的一个女孩
+
+首先最直观的想法就是枚举+二分匹配判定。但是点数n高
+达2000，边数e高达200000；所以枚举的复杂度O (e + n)
+ * O (n ^ 2) = O( n ^ 2 * (e + n))太大了，显然超时
+
+因为题目已经给定了一个完备匹配，而上述算法还没有利
+用这个完备匹配。若已经有了一个完备匹配，假如王子xi
+对应女孩yi是完备匹配中的一条边，那么yi肯定是必定属
+于可选集合的。对于不是yi的yj，如果王子喜欢yj，那么
+假设我们现在让王子选择yj，由于必须形成一个完备匹配
+，如果match[yj]==xj (match[yj]保存的是给定的完备匹
+配中与女孩yj匹配的王子xj)，那么只要能从xj出发找到
+一条新的增广路径，则我们的假设可以成立。这个优化的
+本质还是在进行匹配，只不过我们没有重新进行新的匹配
+，而是充分利用已给出的匹配，仅仅试探性的寻找，看看
+是否存在可行的增广路。这个算法的时间复杂度是：
+O((e + n) * n)，已经优化掉了1维，但是在单case2000ms
+的限制下还是会挂掉的。
+
+可以发现，我们刚才虽然优化了，但是算法依旧做了一些
+无用功，对于每次枚举，我们只希望知道是否存在新的增
+广路径，而上面的优化显然已经找出了可行增广链。我们
+如何才能不通过寻找增广链而直接确定是否存在增广链呢
+？可以的。让我们再次回到初始的想法，如果给定的完备
+匹配中xi->yi，现在我们想让xi指向yj。如果让xi->yj的
+话，那么yi显然对于xi已经没用了，又因为最终的匹配必
+然是一个完备匹配，所以假如寻找到了增广链，那么增广
+链的最后一条边所指向的节点必然是yi。假如我们由yi向
+xi再连一条边会发生什么呢？很明显，形成了一个环！也
+就是说，形成了一个强连通分量。所以说，如果xi可以选
+择yj，那么xi和yj必然属于同一个强连通分量。所以此题
+可用强连通分量来求解
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 2 * 2000 + 66;
+
+int dfn[maxn], low[maxn], belong[maxn];
+int n, id, tot;
+bool instack[maxn], gg[maxn][maxn];
+vector <int> g[maxn];
+stack <int> sta;
+
+void dfs (int u)
+{
+	dfn[u] = low[u] = ++id;
+	sta.push (u);
+	instack[u] = true;
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (!dfn[v])
+		{
+			dfs (v);
+			low[u] = min (low[u], low[v]);
+		}
+		else if (instack[v])
+			low[u] = min (low[u], dfn[v]);
+	}
+
+	if (low[u] == dfn[u])
+	{
+		tot++;
+		int tt;
+		do
+		{
+			tt = sta.top (); sta.pop ();
+			instack[tt] = false;
+			belong[tt] = tot;
+		} while (!sta.empty () && tt != u);
+	}
+}
+
+void SS ()
+{
+	memset (dfn, 0, sizeof (dfn));
+	memset (low, 0, sizeof (low));
+	memset (instack, false, sizeof (instack));
+	id = tot = 0;
+	while (!sta.empty ()) sta.pop ();
+	for (int i = 1; i <= n; i++)
+		if (!dfn[i])
+			dfs (i);
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	while (scanf ("%d", &n) != EOF)
+	{
+		for (int i = 0; i < maxn; i++)
+			g[i].clear ();
+		memset (gg, false, sizeof (gg));
+
+		for (int i = 1; i <= n; i++)
+		{
+			int num;
+			scanf ("%d", &num);
+			for (int j = 1; j <= num; j++)
+			{
+				int u;
+				scanf ("%d", &u);
+				g[i].push_back (n + u);
+				gg[i][u] = true;
+			}
+		}
+		
+		for (int i = 1; i <= n; i++)
+		{
+			int u;
+			scanf ("%d", &u);
+			g[n+u].push_back (i);
+		}
+
+		SS ();
+		vector <int> temp;
+		for (int i = 1; i <= n; i++)
+		{
+			temp.clear ();
+			for (int j = n + 1; j <= 2 * n; j++)
+				if (gg[i][j-n] && belong[i] == belong[j])
+					temp.push_back (j - n);
+			sort (temp.begin (), temp.end ());
+			printf ("%d", temp.size ());
+			for (int j = 0; j < temp.size (); j++)
+				printf (" %d", temp[j]);
+			puts ("");
+		}
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求有向图强连通分量(以POJ2762为例)}
+\begin{lstlisting}[language=C++]
+/***********************************************
+POJ2762
+问题：判定所给的个有向图是否是单连通的
+
+求解：易知同一个强连通分量中的点都是单连通的，所以
+可以缩点。对缩点后的图进行拓扑排序。若拓扑序列所有
+相邻的点之间邻接，则所给的有向图是单连通的，否则不
+是。这是自己简单画画图就出来了
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 1000 + 66;
+
+int dfn[maxn], low[maxn], belong[maxn];
+bool instack[maxn];
+stack <int> sta;
+vector <int> g[maxn];
+int n, m, id, tot;
+int gg[maxn][maxn], indeg[maxn], topo[maxn];
+
+void Init ()
+{
+	for (int i = 0; i < maxn; i++)
+		g[i].clear ();
+}
+
+void dfs (int u)
+{
+	dfn[u] = low[u] = ++id;
+	sta.push (u);
+	instack[u] = true;
+	for (int i = 0; i < g[u].size (); i++)
+	{
+		int v = g[u][i];
+		if (!dfn[v])
+		{
+			dfs (v);
+			low[u] = min (low[u], low[v]);
+		}
+		else if (instack[v])
+			low[u] = min (low[u], dfn[v]);
+	}
+	if (low[u] == dfn[u])
+	{
+		tot++;
+		int tt;
+		do
+		{
+			tt = sta.top (); sta.pop ();
+			instack[tt] = false;
+			belong[tt] = tot;
+		} while (!sta.empty () && tt != u);
+	}
+}
+
+void SS ()
+{
+	memset (dfn, 0, sizeof (dfn));
+	memset (low, 0, sizeof (low));
+	memset (instack, false, sizeof (instack));
+	while (!sta.empty ()) sta.pop ();
+	tot = id = 0;	
+	for (int i = 1; i <= n; i++)
+		if (!dfn[i])
+			dfs (i);
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	int t;
+	scanf ("%d", &t);
+	while (t--)
+	{
+		Init ();
+		scanf ("%d%d", &n, &m);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v;
+			scanf ("%d%d", &u, &v);
+			g[u].push_back (v);
+		}
+		SS ();
+		memset (gg, 0, sizeof (gg));
+		memset (indeg, 0, sizeof (indeg));
+		for (int u = 1; u <= n; u++)
+			for (int i = 0; i < g[u].size (); i++)
+			{
+				int v = g[u][i];
+				if (belong[u] != belong[v])
+				{
+					gg[belong[u]][belong[v]] = 1;
+					indeg[belong[v]]++;
+				}
+			}
+	
+		queue <int> qua;
+		for (int i = 1; i <= tot; i++)
+			if (!indeg[i])
+				qua.push (i);
+
+		int len = 0;
+		while (!qua.empty ())
+		{
+			int u = qua.front (); qua.pop ();
+			topo[++len] = u;
+			for (int v = 1; v <= tot; v++)
+				if (u != v && gg[u][v])
+				{
+					indeg[v]--;
+					if (!indeg[v])
+						qua.push (v);
+				}
+		}
+		
+		bool is_valid = true;
+		for (int i = 1; i <= tot - 1; i++)
+			if (!gg[topo[i]][topo[i+1]])	
+			{
+				is_valid = false;
+				break;
+			}
+		if (is_valid) puts ("Yes");
+		else puts ("No");
+	}
+    return 0;
+}
+\end{lstlisting}
+\subsection{求混合图欧拉回路}
+\begin{lstlisting}[language=C++]
+/***********************************************
+POJ1637
+问题：对于无向边和有向边组成的混合图，判断是否存在
+欧拉回路
+
+求解
+其实问题的难点在于图中的无向边，需要对所有的无向边
+定向(指定一个方向，使之变为有向边)，使整个图变成一
+个有向欧拉图(或有向半欧拉图)。若存在一个定向满足此
+条件，则原图是欧拉图(或半欧拉图)否则不是。关键就是
+如何定向？
+
+首先给原图中的每条无向边随便指定一个方向(称为初始定
+向)，将原图改为有向图G'。然后的任务就是改变G'中某些
+边的方向(当然是无向边转化来的，原混合图中的有向边不
+能动)，使其满足每个点的入度等于出度
+设D[i]为G'中(点i的出度 - 点i的入度)。可以发现，在改
+变G'中边的方向的过程中，任何点的D值的奇偶性都不会发
+生改变(设将边<i, j>改为<j, i>，则i入度加1出度减1，j
+入度减1出度加1，两者之差加2或减2，奇偶性不变)！而最
+终要求的是每个点的入度等于出度，即每个点的D值都为0，
+是偶数，故可得：若初始定向得到的G'中任意一个点的D值
+是奇数，那么原图中一定不存在欧拉环！
+
+若初始D值都是偶数，则将G'改装成网络：设立源点S和汇点
+T，对于每个D[i]>0的点i，连边<S, i>，容量为D[i]/2；对
+于每个D[j]<0的点j，连边<j, T>，容量为-D[j]/2；G'中的
+每条边在网络中仍保留，容量为1(表示该边最多只能被改变
+方向一次)。求这个网络的最大流，若S引出的所有边均满流
+，则原混合图是欧拉图，将网络中所有流量为1的中间边(就
+是不与S或T关联的边)在G'中改变方向，形成的新图G''一定
+是有向欧拉图；若S引出的边中有的没有满流，则原混合图
+不是欧拉图。
+
+为什么能这样建图？
+考虑网络中的一条增广路径S-->i-->...-->j-->T，将这条从
+i到j的路径在G'中全部反向，则i的入度加1出度减1，j的入度
+减1出度加1，路径中其它点的入度出度均不变。而i是和S相连
+的，因此初始D[i]>0，即i的出度大于入度，故这样反向之后
+D[i]减少2；同理，j是和T相连的，这样反向之后D[j]增加2。
+因此，若最大流中边<S, i>满流(流量为初始D[i]/2)，此时
+D[i]值就变成了0，也就是i的入度等于出度。因此只要使所
+有S引出的边全部满流，所有初始D值>0的点的D值将等于0，
+又因为将边变向后所有点的D值之和不变，所有初始D值小于0
+的点的D值也将等于0，而初始D值等于0的D点既不与S相连也不
+与T相连，所以它们是网络中的中间点，而中间点的流入量等
+于流出量，故它们的入度和出度一直不变，即D值一直为0。因
+此，整个图G'成为欧拉图
+
+扩展问题：欧拉路径的判定
+求解
+首先可以想到的是枚举欧拉路径的起点i和终点j，然后在
+图中添加边<j, i>，再求图中是否有欧拉回路即可。但是
+，该算法的时间复杂度达到了O(M * 最大流的时间)，需
+要优化
+前面已经说过，在将边变向的过程中任何点的D值的奇偶
+性都不会改变，而一个有向图有欧拉路径的充要条件是基
+图连通且有且只有一个点的入度比出度少1(作为欧拉路径
+的起点)，有且只有一个点的入度比出度多1(作为终点)，
+其余点的入度等于出度。这就说明，先把图中的无向边随
+便定向，然后求每个点的D值，若有且只有两个点的初始D
+值为奇数，其余的点初始D值都为偶数，则有可能存在欧拉
+路径(否则不可能存在)。进一步，检查这两个初始D值为奇
+数的点，设为点i和点j，若有D[i]>0且D[j]<0，则i作起点
+j作终点(否则若D[i]与D[j]同号则不存在欧拉路径)，连边
+<j, i>，求是否存在欧拉环即可(将求出的欧拉环中删去边
+<j, i>即可)。这样只需求一次最大流
+************************************************/
+
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <set>
+#include <bitset>
+#include <list>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <vector>
+#include <ios>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <utility>
+#include <complex>
+#include <numeric>
+#include <functional>
+#include <cmath>
+#include <ctime>
+#include <climits>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+using namespace std;
+
+#define CFF freopen ("aaa.txt", "r", stdin)
+#define CPPFF ifstream cin ("aaa.txt")
+#define	DB(ccc)	cout << #ccc << " = " << ccc << endl
+#define PB push_back
+#define MP(A, B) make_pair(A, B)
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+typedef pair <int, int> PII;
+typedef pair <int, bool> PIB;
+
+const int INF = 0x7F7F7F7F;
+const int MOD = 1e9 + 7;
+const double EPS = 1e-10;
+const double PI = 2 * acos (0.0);
+const int maxn = 3000 + 66;
+
+struct Node
+{
+	int to, nxt, c, f;	
+};
+
+Node edge[maxn];
+int head[maxn], edgelen;
+int dep[maxn], cnt[maxn], cur[maxn];
+
+void Init ()
+{
+	memset (head, -1, sizeof (head));
+	memset (edge, -1, sizeof (edge));
+	edgelen = 0;
+}
+
+void AddEdge (int u, int v, int w, int rw = 0)
+{
+	edge[edgelen].to = v, edge[edgelen].c = w, edge[edgelen].f = 0;
+	edge[edgelen].nxt = head[u], head[u] = edgelen++;
+	edge[edgelen].to = u, edge[edgelen].c = rw, edge[edgelen].f = 0;
+	edge[edgelen].nxt = head[v], head[v] = edgelen++;
+}
+
+void Bfs (int s, int e)
+{
+	memset (dep, -1, sizeof (dep));
+	memset (cnt, 0, sizeof (cnt));
+	dep[e] = 0;
+	cnt[dep[e]]++;
+	queue <int> qu;
+	qu.push (e);
+	while (!qu.empty ())
+	{
+		int u = qu.front (); qu.pop ();
+		for (int i = head[u]; i != -1; i = edge[i].nxt)
+		{
+			int v = edge[i].to;
+			if (dep[v] != -1) continue;
+			qu.push (v);
+			dep[v] = dep[u] + 1;
+			cnt[dep[v]]++;
+		}
+	}
+}
+
+int sta[maxn];
+
+int MaxFlow (int s, int e, int n)
+{
+	Bfs (s, e);
+	int res = 0, top = 0, u = s;
+	memcpy (cur, head, sizeof (head));
+	while (dep[s] < n)
+	{
+		if (u == e)
+		{
+			int minval = INF, minval_pos = -1;
+			for (int i = 0; i < top; i++)
+				if (minval > edge[sta[i]].c - edge[sta[i]].f)
+				{
+					minval = edge[sta[i]].c - edge[sta[i]].f;
+					minval_pos = i;
+				}
+			for (int i = 0; i < top; i++)
+			{
+				edge[sta[i]].f += minval;
+				edge[sta[i]^1].f -= minval;
+			}
+			res += minval;
+			top = minval_pos;
+			u = edge[sta[top]^1].to;
+		}
+		else
+		{
+			bool is_have = false;
+			for (int i = cur[u]; i != -1; i = edge[i].nxt)
+			{
+				int v = edge[i].to;
+				if (edge[i].c - edge[i].f && dep[v] + 1 == dep[u])
+				{
+					cur[u] = i;
+					sta[top++] = cur[u];
+					u = v;
+					is_have = true;
+					break;
+				}
+			}
+			if (is_have) continue;
+			int minval = n;
+			for (int i = head[u]; i != -1; i = edge[i].nxt)
+				if (edge[i].c - edge[i].f && dep[edge[i].to] < minval)
+				{
+					minval = dep[edge[i].to];
+					cur[u] = i;
+				}
+			cnt[dep[u]]--;
+			if (!cnt[dep[u]]) return res;
+			dep[u] = minval + 1;
+			cnt[dep[u]]++;
+			if (u != s) u= edge[sta[--top]^1].to;
+		}
+	}
+	return res;
+}
+
+int indeg[maxn], outdeg[maxn];
+int n, m;
+
+void SS ()
+{
+	bool is_have = true;
+	int full = 0;
+	for (int i = 1; i <= n; i++)
+	{
+		if (abs (indeg[i] - outdeg[i]) & 1)
+		{
+			is_have = false;
+			break;
+		}
+		if (indeg[i] > outdeg[i])
+		{
+			AddEdge (i, n + 1, (indeg[i] - outdeg[i]) / 2);
+			full += (indeg[i] - outdeg[i]) / 2;		
+		}
+		else if (indeg[i] < outdeg[i])
+			AddEdge (0, i, (outdeg[i] - indeg[i]) / 2);
+	}
+
+	if (!is_have) puts ("impossible");
+	else
+	{
+		if (MaxFlow (0, n + 1, n + 2) == full) puts ("possible");
+		else puts ("impossible");
+	}
+}
+
+int main()
+{
+    //CFF;
+    //CPPFF;
+	int t;
+	scanf ("%d", &t);
+	while (t--)
+	{
+		Init ();
+		memset (indeg, 0, sizeof (indeg));
+		memset (outdeg, 0, sizeof (outdeg));
+
+		scanf ("%d%d", &n, &m);
+		for (int i = 1; i <= m; i++)
+		{
+			int u, v, w;
+			scanf ("%d%d%d", &u, &v, &w);
+			outdeg[u]++, indeg[v]++;
+			if (!w) AddEdge (u, v, 1);			
+		}
+		SS ();
+	}
+    return 0;
+}
+\end{lstlisting}
