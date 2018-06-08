@@ -4,3 +4,13 @@ window.onmouseup = function(){
         chrome.runtime.sendMessage(selection.toString());
     }
 }
+
+function getSampleInput(){
+  var inputdata = getElementsByClassName("sample-test");
+  alert(inputdata);
+}
+
+window.onload = function(){
+  var inputdata = getElementsByClassName("sample-test");
+  alert(inputdata);
+}

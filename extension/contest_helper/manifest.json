@@ -19,13 +19,13 @@
             "48": "images/icon48.png",
             "128": "images/icon128.png"
         },
-        "default_title": "my clock!",
+        "default_title": "contest_helper",
         "default_popup": "popup.html"
     },
 
     "content_scripts": [
         {
-            "matches": ["*://*/*"],
+            "matches": ["*://*.codeforces.com/contest/*/problem/*", "*://*.codeforces.com/problemset/problem/*/*"],
             "js": ["js/content.js"]
         }
     ],
@@ -37,6 +37,13 @@
     },
 
     "permissions": [
-    "contextMenus"
+    "contextMenus",
+    "tabs",
+    "notifications"
+],
+
+    "web_accessible_resources": [
+    "images/*.png"
 ]
+
 }
