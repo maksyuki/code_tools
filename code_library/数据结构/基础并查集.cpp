@@ -8,15 +8,13 @@
 @val: ½ÚµãµÄÐòºÅ
 ************************************************/
 
-void Init ()
-{
-    for (int i = 0; i < maxn; i++)
-        parent[i] = i;
+void Init() {
+    for(int i = 0; i < maxn; i++)
+        par[i] = i;
 }
 
 
-int UnFind (int val)
-{
-    if (parent[val] == val) return val;
-    return parent[val] = UnFind (parent[val]);
+int UnFind(int v) {
+    if(par[v] == v) return v;
+    return par[v] = UnFind(par[v]);
 }
